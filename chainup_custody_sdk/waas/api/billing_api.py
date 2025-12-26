@@ -28,11 +28,9 @@ class BillingApi(BaseApi):
             params: Withdrawal parameters
                 - request_id: Unique request ID (merchant generated)
                 - from_uid: Source user ID
-                - to_address: Destination address
+                - to_address: Destination address or (address_memo for XRP)
                 - amount: Withdrawal amount
                 - symbol: Cryptocurrency symbol (e.g., 'BTC', 'ETH')
-                - memo (optional): Address memo/tag (for coins like XRP, EOS)
-                - remark (optional): Additional remark
 
         Returns:
             Withdrawal result
