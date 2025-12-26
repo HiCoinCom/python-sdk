@@ -35,7 +35,6 @@ from chainup_custody_sdk import WaasClient
 
 client = (
     WaasClient.new_builder()
-    .set_host("https://api.custody.chainup.com")
     .set_app_id("your-app-id")
     .set_private_key("""-----BEGIN PRIVATE KEY-----
 your-private-key-content
@@ -118,7 +117,6 @@ mpc_client = (
 your-rsa-private-key-content
 -----END PRIVATE KEY-----""")
     .set_api_key("your-api-key")
-    .set_domain("https://mpc-api.custody.chainup.com")
     .set_debug(True)
     .build()
 )
