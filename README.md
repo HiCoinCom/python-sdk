@@ -1,30 +1,27 @@
 # ChainUp Custody Python SDK
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.1.0-orange.svg)](https://github.com/ChainUp-Custody/python-sdk)
 
-ChainUp Custody 官方 Python SDK - 为数字资产托管提供完整的解决方案。
+A comprehensive Python SDK for ChainUp Custody's WaaS (Wallet-as-a-Service) and MPC (Multi-Party Computation) APIs.
 
-> 🔄 **基于 JavaScript SDK**: 本项目根据 [ChainUp Custody JavaScript SDK](https://github.com/HiCoinCom/js-sdk) 生成，确保跨语言 API 的一致性。
+**[中文文档](README_CN.md)**
 
-## ✨ 特性
+## Features
 
-- 🔐 **WaaS（钱包即服务）** - 完整的托管钱包 API 集成（6 个 API）
-- 🔑 **MPC（多方计算）** - 安全的分布式密钥管理（9 个 API）
-- 🔒 **交易签名** - MpcSignUtil 支持提现和 Web3 交易签名
-- 🏗️ **现代架构** - 面向对象设计，使用 Builder 模式
-- 📝 **完整的类型提示** - 符合 Python 类型注解标准
-- ✅ **生产就绪** - 经过企业级环境验证
-- 🚀 **易于集成** - 简单直观的 API
-- 🔒 **与 Java/JS SDK 一致** - 请求/响应加密流程完全对齐
+- 🔐 **WaaS API** - Wallet-as-a-Service for managing users, accounts, deposits, and withdrawals
+- 🔑 **MPC API** - Multi-Party Computation for secure wallet management
+- 📝 **Type Hints** - Full type annotations for better IDE support
+- 🛡️ **Custom Exceptions** - Detailed error handling with specific exception types
+- 📊 **Data Models** - Dataclass-based models for type-safe data handling
+- 🔧 **Builder Pattern** - Fluent API for easy client configuration
+- 🪵 **Logging** - Configurable logging system
+- ✅ **Tested** - Comprehensive unit test coverage
 
-## 📦 安装
+## Installation
 
-```bash
-pip install chainup-custody-sdk
-```
-
-或从源码安装:
+### From Source
 
 ```bash
 git clone https://github.com/ChainUp-Custody/python-sdk.git
@@ -32,207 +29,277 @@ cd python-sdk
 pip install -e .
 ```
 
-## 🚀 快速开始
+### Using pip (coming soon)
 
-### WaaS（托管）API
+```bash
+pip install chainup-custody-sdk
+```
+
+### Development Installation
+
+```bash
+pip install -e ".[dev]"
+```
+
+## Quick Start
+
+### WaaS Client
 
 ```python
-from chainup_custody_sdk import WaasClient
+from chainup_custody_sdk import WaasClient, ApiError
 
-# 使用 Builder 模式创建 WaaS 客户端
+# Create client using builder pattern
 client = (
-    WaasClient.new_builder()
-    .set_host("https://api.custody.chainup.com")
+    WaasClient.builder()
     .set_app_id("your-app-id")
-    .set_private_key("-----BEGIN PRIVATE KEY-----\n...")
-    .set_public_key("-----BEGIN PUBLIC KEY-----\n...")
-    .set_debug(True)
+    .set_private_key("your-rsa-private-key")
+    .set_public_key("chainup-public-key")
+    .set_debug(False)
     .build()
 )
 
-# 用户操作
-user_api = client.get_user_api()
-user = user_api.register_email_user({"email": "user@example.com"})
+# Use context manager for automatic resource cleanup
+with client:
+    # Register a user
+    try:
+        user = client.get_user_api().register_email_user({
+            "email": "user@example.com"
+        })
+        print(f"User created: {user}")
+    except ApiError as e:
+        print(f"API Error: {e}")
 
-# 账户操作
-account_api = client.get_account_api()
-balance = account_api.get_user_account({
-    "uid": user["id"],
-    "symbol": "BTC"
-})
-
-# 转账操作
-transfer_api = client.get_transfer_api()
-result = transfer_api.account_transfer({
-    "request_id": "transfer_001",
-    "symbol": "USDT",
-    "amount": "100.5",
-    "from": "user1",
-    "to": "user2"
-})
+    # Get account balance
+    balance = client.get_account_api().get_user_account({
+        "uid": 12345,
+        "symbol": "ETH"
+    })
+    print(f"Balance: {balance}")
 ```
 
-### MPC 钱包 API
+### MPC Client
 
 ```python
-from chainup_custody_sdk import MpcClient
+from chainup_custody_sdk import MpcClient, ApiError
 
-# 创建 MPC 客户端
-mpc_client = (
-    MpcClient.new_builder()
-    .set_app_id("your-app-id")
-    .set_rsa_private_key("-----BEGIN PRIVATE KEY-----\n...")
-    .set_api_key("your-api-key")
-    .set_domain("https://mpc-api.custody.chainup.com")
-    .set_sign_private_key("-----BEGIN PRIVATE KEY-----\n...")  # 可选：用于提现/Web3交易签名
-    .build()
-)
-
-# 创建钱包
-wallet_api = mpc_client.get_wallet_api()
-wallet = wallet_api.create_wallet({
-    "sub_wallet_name": "My Wallet",
-    "app_show_status": 1
-})
-
-# 提现
-withdraw_api = mpc_client.get_withdraw_api()
-result = withdraw_api.withdraw({
-    "request_id": "unique-request-id",
-    "sub_wallet_id": wallet["sub_wallet_id"],
-    "symbol": "ETH",
-    "amount": "0.1",
-    "address_to": "0x123..."
-})
-```
-
-### 使用自定义加密提供者
-
-SDK 支持自定义加密实现（如 HSM、KMS 等）：
-
-```python
-from chainup_custody_sdk import WaasClient, ICryptoProvider
-
-class MyCustomCryptoProvider(ICryptoProvider):
-    def __init__(self, hsm_client):
-        super().__init__()
-        self.hsm_client = hsm_client
-
-    def encrypt_with_private_key(self, data: str) -> str:
-        # 使用 HSM/KMS 进行加密
-        return self.hsm_client.encrypt(data)
-
-    def decrypt_with_public_key(self, encrypted_data: str) -> str:
-        # 使用 HSM/KMS 进行解密
-        return self.hsm_client.decrypt(encrypted_data)
-
-    def sign(self, data: str) -> str:
-        return self.hsm_client.sign(data)
-
-    def verify(self, data: str, signature: str) -> bool:
-        return self.hsm_client.verify(data, signature)
-
-# 使用自定义加密提供者
+# Create MPC client
 client = (
-    WaasClient.new_builder()
-    .set_host("https://api.custody.chainup.com")
+    MpcClient.builder()
     .set_app_id("your-app-id")
-    .set_crypto_provider(MyCustomCryptoProvider(my_hsm_client))
+    .set_rsa_private_key("your-rsa-private-key")
+    .set_sign_private_key("your-sign-private-key")
+    .set_waas_public_key("waas-public-key")
+    .set_debug(False)
     .build()
 )
+
+with client:
+    # Create a wallet
+    try:
+        wallet = client.get_wallet_api().create_wallet({
+            "sub_wallet_name": "My Wallet",
+            "app_show_status": 1
+        })
+        print(f"Wallet created: {wallet}")
+    except ApiError as e:
+        print(f"Error: {e}")
+
+    # Query deposits
+    deposits = client.get_deposit_api().sync_deposit_records(0)
+    print(f"Deposits: {deposits}")
 ```
 
-## 📚 API 参考
+## API Reference
 
-### WaaS 客户端 APIs
+### WaaS APIs
 
-#### UserApi - 用户管理
+| API              | Description                            |
+| ---------------- | -------------------------------------- |
+| `UserApi`        | User registration and management       |
+| `AccountApi`     | Account balance and address management |
+| `BillingApi`     | Deposits, withdrawals, and miner fees  |
+| `CoinApi`        | Cryptocurrency list queries            |
+| `TransferApi`    | Internal transfers between users       |
+| `AsyncNotifyApi` | Callback notification handling         |
 
-- `register_mobile_user(params)` - 手机号注册用户
-- `register_email_user(params)` - 邮箱注册用户
-- `get_mobile_user(params)` - 获取用户信息（手机）
-- `get_email_user(params)` - 获取用户信息（邮箱）
-- `sync_user_list(params)` - 同步用户列表（分页）
+### MPC APIs
 
-#### AccountApi - 账户管理
+| API               | Description                    |
+| ----------------- | ------------------------------ |
+| `WalletApi`       | Wallet creation and management |
+| `DepositApi`      | Deposit record queries         |
+| `WithdrawApi`     | Withdrawal operations          |
+| `WorkspaceApi`    | Workspace and chain management |
+| `AutoSweepApi`    | Auto-sweep configuration       |
+| `Web3Api`         | Web3 contract interactions     |
+| `TronResourceApi` | TRON resource management       |
+| `NotifyApi`       | MPC callback handling          |
 
-- `get_user_account(params)` - 获取用户账户余额
-- `get_user_address(params)` - 获取/创建充值地址
-- `get_company_account(params)` - 获取公司账户信息
-- `get_user_address_info(params)` - 通过地址获取用户信息
-- `sync_user_address_list(params)` - 同步地址列表（分页）
+## Error Handling
 
-#### BillingApi - 账单管理
+The SDK provides a hierarchy of custom exceptions:
 
-- `withdraw(params)` - 创建提现请求
-- `withdraw_list(params)` - 查询提现记录
-- `sync_withdraw_list(params)` - 同步提现记录（分页）
-- `deposit_list(params)` - 获取充值记录
-- `sync_deposit_list(params)` - 同步充值记录（分页）
-- `miner_fee_list(params)` - 查询矿工费记录
-- `sync_miner_fee_list(params)` - 同步矿工费记录（分页）
+```python
+from chainup_custody_sdk import (
+    ChainUpError,      # Base exception
+    ApiError,          # API request errors
+    ConfigError,       # Configuration errors
+    CryptoError,       # Encryption/decryption errors
+    NetworkError,      # Network connectivity errors
+    ValidationError,   # Input validation errors
+    SignatureError,    # Signature verification errors
+    RateLimitError,    # Rate limiting errors
+)
 
-#### CoinApi - 币种管理
+try:
+    result = client.get_billing_api().withdraw({...})
+except ApiError as e:
+    print(f"API Error [{e.code}]: {e.message}")
+except ConfigError as e:
+    print(f"Configuration Error: {e}")
+except ChainUpError as e:
+    print(f"SDK Error: {e}")
+```
 
-- `get_coin_list(params)` - 获取支持的币种列表
+## API Error Codes
 
-#### TransferApi - 转账管理
+| Code    | Constant                  | Description                            |
+| ------- | ------------------------- | -------------------------------------- |
+| 0       | `SUCCESS`                 | Success                                |
+| 100001  | `SYSTEM_ERROR`            | System error                           |
+| 100004  | `PARAM_INVALID`           | Invalid request parameters             |
+| 100005  | `SIGN_ERROR`              | Signature verification failed          |
+| 100007  | `IP_FORBIDDEN`            | IP address not allowed                 |
+| 100015  | `MERCHANT_ID_INVALID`     | Invalid merchant ID                    |
+| 100016  | `MERCHANT_EXPIRED`        | Merchant information expired           |
+| 110004  | `USER_FROZEN`             | User is frozen, withdrawal not allowed |
+| 110023  | `MOBILE_REGISTERED`       | Mobile number already registered       |
+| 110037  | `WITHDRAW_ADDRESS_RISK`   | Withdrawal address has risk            |
+| 110055  | `WITHDRAW_ADDRESS_ERROR`  | Invalid withdrawal address             |
+| 110065  | `USER_NOT_EXIST`          | User does not exist                    |
+| 110078  | `AMOUNT_BELOW_MIN`        | Amount below minimum                   |
+| 110087  | `AMOUNT_EXCEED_MAX`       | Amount exceeds maximum                 |
+| 110088  | `DUPLICATE_REQUEST`       | Duplicate request                      |
+| 120202  | `COIN_NOT_SUPPORTED`      | Coin not supported                     |
+| 120402  | `BALANCE_INSUFFICIENT`    | Insufficient balance                   |
+| 120403  | `FEE_INSUFFICIENT`        | Insufficient fee balance               |
+| 3040006 | `SELF_TRANSFER_FORBIDDEN` | Cannot transfer to self                |
 
-- `account_transfer(params)` - 商户内部转账
-- `get_account_transfer_list(params)` - 查询转账记录
-- `sync_account_transfer_list(params)` - 同步转账记录（分页）
+## Logging
 
-#### AsyncNotifyApi - 异步通知
+Configure logging for debugging:
 
-- `notify_request(cipher)` - 解密充值/提现通知
-- `verify_request(cipher)` - 解密提现二次验证请求
-- `verify_response(withdraw)` - 加密二次验证响应
+```python
+from chainup_custody_sdk import configure_logging, enable_debug_logging
 
-### MPC 客户端 APIs
+# Enable debug logging
+enable_debug_logging()
 
-#### WalletApi - 钱包管理
+# Or configure with custom settings
+configure_logging(level="DEBUG", format="%(asctime)s - %(name)s - %(message)s")
+```
 
-- `create_wallet(params)` - 创建钱包
-- `create_wallet_address(params)` - 创建钱包地址
-- `query_wallet_address(params)` - 查询钱包地址
-- `get_wallet_assets(params)` - 获取钱包资产
-- `change_wallet_show_status(params)` - 修改钱包显示状态
-- `get_wallet_list(params)` - 获取钱包列表
+## Data Models
 
-#### DepositApi - 充值管理
+The SDK provides dataclass-based models:
 
-- `get_deposit_records(params)` - 获取充值记录
-- `sync_deposit_records(params)` - 同步充值记录（分页）
+```python
+from chainup_custody_sdk import (
+    ApiResponse,
+    WalletInfo,
+    AddressInfo,
+    TransactionRecord,
+    CoinInfo,
+    UserInfo,
+    NotifyData,
+    AssetBalance,
+)
 
-#### WithdrawApi - 提现管理
+# Parse API response
+response = ApiResponse.from_dict(api_data)
+if response.is_success:
+    wallet = WalletInfo.from_dict(response.data)
+    print(f"Wallet ID: {wallet.sub_wallet_id}")
+```
 
-- `withdraw(params)` - 发起提现
-- `get_withdraw_records(params)` - 获取提现记录
-- `sync_withdraw_records(params)` - 同步提现记录（分页）
+## Development
 
-## 🔧 开发要求
+### Running Tests
 
-- Python 3.7+
-- requests >= 2.25.0
+```bash
+# Install dev dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run with coverage
+pytest --cov=chainup_custody_sdk
+```
+
+### Code Formatting
+
+```bash
+# Format code
+black chainup_custody_sdk tests
+
+# Sort imports
+isort chainup_custody_sdk tests
+
+# Type checking
+mypy chainup_custody_sdk
+```
+
+## Project Structure
+
+```
+chainup_custody_sdk/
+├── __init__.py          # Package exports
+├── exceptions.py        # Custom exception hierarchy
+├── models.py            # Dataclass models
+├── enums.py             # Enum constants
+├── logger.py            # Logging utilities
+├── py.typed             # PEP 561 type marker
+├── utils/               # Utility modules
+│   ├── crypto_provider.py
+│   └── mpc_sign_util.py
+├── waas/                # WaaS API implementation
+│   ├── waas_client.py
+│   ├── waas_config.py
+│   └── api/
+│       ├── base_api.py
+│       ├── user_api.py
+│       ├── account_api.py
+│       ├── billing_api.py
+│       ├── coin_api.py
+│       ├── transfer_api.py
+│       └── async_notify_api.py
+└── mpc/                 # MPC API implementation
+    ├── mpc_client.py
+    ├── mpc_config.py
+    └── api/
+        ├── mpc_base_api.py
+        ├── wallet_api.py
+        ├── deposit_api.py
+        ├── withdraw_api.py
+        ├── workspace_api.py
+        ├── auto_sweep_api.py
+        ├── web3_api.py
+        ├── tron_resource_api.py
+        └── notify_api.py
+```
+
+## Requirements
+
+- Python 3.8+
 - pycryptodome >= 3.15.0
+- requests >= 2.25.0
 
-## 📄 许可证
+## License
 
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
 
-## 🤝 贡献
+## Support
 
-欢迎贡献！请随时提交 Pull Request。
-
-## 📞 支持
-
-- 文档：[ChainUp Custody 官方文档](https://custodydocs-zh.chainup.com/)
-- Issues：[GitHub Issues](https://github.com/ChainUp-Custody/python-sdk/issues)
-- Email：support@chainup.com
-
-## 🔗 相关链接
-
-- [JavaScript SDK](https://github.com/HiCoinCom/js-sdk)
-- [Java SDK](https://github.com/ChainUp-Custody/java-sdk)
-- [官方网站](https://www.chainup.com/)
-  python sdk for Chainup custody
+- GitHub Issues: [Report a bug](https://github.com/ChainUp-Custody/python-sdk/issues)
+- Documentation: [ChainUp Custody Docs](https://custody.chainup.com)
