@@ -100,19 +100,18 @@ class UserApi(BaseApi):
         response = self.post("/user/info", params)
         return self.validate_response(response)
 
-    def sync_user_list(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def sync_user_list(self, max_id: int = 0) -> List[Dict[str, Any]]:
         """
         Syncs user list by max ID (pagination).
 
         Args:
-            params: Query parameters
-                - max_id: Maximum user ID for pagination (0 for first sync)
+            max_id: Maximum user ID for pagination (0 for first sync)
 
         Returns:
             Synced user list
 
         Example:
-            users = user_api.sync_user_list({'max_id': 0})
+            users = user_api.sync_user_list(0)
         """
-        response = self.post("/user/syncList", params)
+        response = self.post("/user/syncList", {"max_id": max_id})
         return self.validate_response(response)

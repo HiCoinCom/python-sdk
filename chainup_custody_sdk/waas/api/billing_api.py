@@ -49,106 +49,98 @@ class BillingApi(BaseApi):
         response = self.post("/billing/withdraw", params)
         return self.validate_response(response)
 
-    def withdraw_list(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def withdraw_list(self, ids: list) -> List[Dict[str, Any]]:
         """
         Gets withdrawal records by request IDs.
 
         Args:
-            params: Query parameters
-                - ids: Comma-separated list of request IDs
+            ids: List of request IDs
 
         Returns:
             Withdrawal records
 
         Example:
-            withdrawals = billing_api.withdraw_list({
-                'ids': 'withdraw_001,withdraw_002'
-            })
+            withdrawals = billing_api.withdraw_list(['withdraw_001', 'withdraw_002'])
         """
-        response = self.post("/billing/withdrawList", params)
+        response = self.post("/billing/withdrawList", {"ids": ",".join(ids)})
         return self.validate_response(response)
 
-    def sync_withdraw_list(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def sync_withdraw_list(self, max_id: int = 0) -> List[Dict[str, Any]]:
         """
         Syncs withdrawal records by max ID (pagination).
 
         Args:
-            params: Query parameters
-                - max_id: Maximum transaction ID for pagination
+            max_id: Maximum transaction ID for pagination
 
         Returns:
             Synced withdrawal records
 
         Example:
-            withdrawals = billing_api.sync_withdraw_list({'max_id': 1000})
+            withdrawals = billing_api.sync_withdraw_list(0)
         """
-        response = self.post("/billing/syncWithdrawList", params)
+        response = self.post("/billing/syncWithdrawList", {"max_id": max_id})
         return self.validate_response(response)
 
-    def deposit_list(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def deposit_list(self, ids: list) -> List[Dict[str, Any]]:
         """
         Gets deposit records by WaaS IDs.
 
         Args:
-            params: Query parameters
-                - ids: Comma-separated list of WaaS deposit IDs
+            ids: List of WaaS deposit IDs
 
         Returns:
             Deposit records
 
         Example:
-            deposits = billing_api.deposit_list({'ids': '123,456'})
+            deposits = billing_api.deposit_list(['123', '456'])
         """
-        response = self.post("/billing/depositList", params)
+        response = self.post("/billing/depositList", {"ids": ",".join(ids)})
         return self.validate_response(response)
 
-    def sync_deposit_list(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def sync_deposit_list(self, max_id: int = 0) -> List[Dict[str, Any]]:
         """
         Syncs deposit records by max ID (pagination).
 
         Args:
-            params: Query parameters
-                - max_id: Maximum transaction ID for pagination
+            max_id: Maximum transaction ID for pagination
 
         Returns:
             Synced deposit records
 
         Example:
-            deposits = billing_api.sync_deposit_list({'max_id': 1000})
+            deposits = billing_api.sync_deposit_list(0)
         """
-        response = self.post("/billing/syncDepositList", params)
+        response = self.post("/billing/syncDepositList", {"max_id": max_id})
         return self.validate_response(response)
 
-    def miner_fee_list(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def miner_fee_list(self, ids: list) -> List[Dict[str, Any]]:
         """
         Gets miner fee records by WaaS IDs.
 
         Args:
-            params: Query parameters
-                - ids: Comma-separated list of WaaS transaction IDs
+            ids: List of WaaS transaction IDs
 
         Returns:
             Miner fee records
 
         Example:
-            fees = billing_api.miner_fee_list({'ids': '123,456'})
+            fees = billing_api.miner_fee_list(['123', '456'])
         """
-        response = self.post("/billing/minerFeeList", params)
+        response = self.post("/billing/minerFeeList", {"ids": ",".join(ids)})
         return self.validate_response(response)
 
-    def sync_miner_fee_list(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def sync_miner_fee_list(self, max_id: int = 0) -> List[Dict[str, Any]]:
         """
         Syncs miner fee records by max ID (pagination).
 
         Args:
-            params: Query parameters
-                - max_id: Maximum transaction ID for pagination
+            max_id: Maximum transaction ID for pagination
 
         Returns:
             Synced miner fee records
 
         Example:
-            fees = billing_api.sync_miner_fee_list({'max_id': 1000})
+            fees = billing_api.sync_miner_fee_list(0)
         """
-        response = self.post("/billing/syncMinerFeeList", params)
+        response = self.post("/billing/syncMinerFeeList", {"max_id": max_id})
         return self.validate_response(response)

@@ -96,19 +96,18 @@ class AccountApi(BaseApi):
         response = self.post("/account/getDepositAddressInfo", params)
         return self.validate_response(response)
 
-    def sync_user_address_list(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def sync_user_address_list(self, max_id: int = 0) -> List[Dict[str, Any]]:
         """
         Syncs user address list by max ID (pagination).
 
         Args:
-            params: Query parameters
-                - max_id: Maximum address ID for pagination (0 for first sync)
+            max_id: Maximum address ID for pagination (0 for first sync)
 
         Returns:
             Synced user address list with id, uid, address, symbol
 
         Example:
-            addresses = account_api.sync_user_address_list({'max_id': 0})
+            addresses = account_api.sync_user_address_list(0)
         """
-        response = self.post("/address/syncList", params)
+        response = self.post("/address/syncList", {"max_id": max_id})
         return self.validate_response(response)

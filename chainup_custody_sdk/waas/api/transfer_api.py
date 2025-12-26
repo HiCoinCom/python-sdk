@@ -74,19 +74,18 @@ class TransferApi(BaseApi):
         response = self.post("/account/transferList", params)
         return self.validate_response(response)
 
-    def sync_account_transfer_list(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def sync_account_transfer_list(self, max_id: int = 0) -> List[Dict[str, Any]]:
         """
         Syncs transfer records by max ID (pagination).
 
         Args:
-            params: Query parameters
-                - max_id: Maximum transaction ID for pagination
+            max_id: Maximum transaction ID for pagination
 
         Returns:
             Synced transfer records
 
         Example:
-            transfers = transfer_api.sync_account_transfer_list({'max_id': 1000})
+            transfers = transfer_api.sync_account_transfer_list(0)
         """
-        response = self.post("/account/syncTransferList", params)
+        response = self.post("/account/syncTransferList", {"max_id": max_id})
         return self.validate_response(response)
