@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # 检查依赖
 try:
-    from chainup_custody_sdk import WaasClient
+    from chainup_custody_sdk import WaasClient, ApiError
 except ImportError as e:
     print("=" * 60)
     print("❌ 缺少必要的依赖")
@@ -31,7 +31,7 @@ def main():
         WaasClient.new_builder()
         .set_app_id("")
         .set_private_key("")
-        .set_public_key("" )
+        .set_public_key("")
         .set_debug(False)
         .build()
     )
@@ -44,7 +44,7 @@ def main():
     try:
         user = user_api.register_email_user({"email": "user12@example.com"})
         print(f"Created user: {user}")
-    except Exception as e:
+    except ApiError as e:
         print(f"Error creating user: {e}")
 
     # 获取用户信息
@@ -61,7 +61,7 @@ def main():
             {"country": "86", "mobile": "13800000011"}
         )
         print(f"Created mobile user: {user_mobile}")
-    except Exception as e:
+    except ApiError as e:
         print(f"Error creating mobile user: {e}")
     
     # 获取手机用户信息
@@ -114,7 +114,7 @@ def main():
             }
         )
         print(f"Withdraw result: {withdraw_result}")
-    except Exception as e:
+    except ApiError as e:
         print(f"Error during withdrawal: {e}")
 
     # 查询提现记录
@@ -157,7 +157,7 @@ def main():
             }
         )
         print(f"Transfer result: {transfer_result}")
-    except Exception as e:
+    except ApiError as e:
         print(f"Error during transfer: {e}")
 
     # 查询转账记录

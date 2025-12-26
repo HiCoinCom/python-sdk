@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # 检查依赖
 try:
-    from chainup_custody_sdk import MpcClient
+    from chainup_custody_sdk import MpcClient, ApiError
 except ImportError as e:
     print("=" * 60)
     print("❌ 缺少必要的依赖")
@@ -56,7 +56,7 @@ def main():
         if not sub_wallet_id:
             print("创建成功，但未返回 sub_wallet_id")
             return
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"创建钱包失败: {e}")
         return
  """
@@ -66,7 +66,7 @@ def main():
             {"sub_wallet_id": sub_wallet_id, "symbol": "ETH"}
         )
         print(f"Created address: {address}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"创建地址失败: {e}")
 
     # 查询钱包地址
@@ -75,7 +75,7 @@ def main():
             {"sub_wallet_id": sub_wallet_id, "symbol": "ETH", "max_id": 0}
         )
         print(f"Wallet addresses: {len(addresses) if isinstance(addresses, list) else 'N/A'}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"查询地址失败: {e}")
 
     # 获取钱包资产
@@ -84,7 +84,7 @@ def main():
             {"sub_wallet_id": sub_wallet_id, "symbol": "ETH"}
         )
         print(f"Wallet assets: {assets}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"查询资产失败: {e}")
 
     # ============== 充值管理 ==============
@@ -100,7 +100,7 @@ def main():
             deposit_ids = [d["id"] for d in deposits[:3]]  # 取前3条
             deposit_records = deposit_api.get_deposit_records({"ids": deposit_ids})
             print(f"Deposit records count: {len(deposit_records) if isinstance(deposit_records, list) else 'N/A'}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"查询充值记录失败: {e}")
 
     # ============== 提现管理 ==============
@@ -120,21 +120,21 @@ def main():
             }
         )
         print(f"Withdraw result: {withdraw_result}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"提现失败: {e}")
 
     # 查询提现记录
     try:
         withdraw_records = withdraw_api.get_withdraw_records(["12345678"])
         print(f"Withdraw records: {withdraw_records}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"查询提现记录失败: {e}")
 
     # 同步提现记录
     try:
         withdrawals = withdraw_api.sync_withdraw_records(0)
         print(f"Withdrawals count: {len(withdrawals) if isinstance(withdrawals, list) else 'N/A'}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"同步提现记录失败: {e}")
 
     # ============== Web3 交易 ==============
@@ -157,21 +157,21 @@ def main():
             }
         )
         print(f"Web3 transaction result: {web3_result}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"创建 Web3 交易失败: {e}")
 
     # 查询 Web3 交易记录
     try:
         web3_records = web3_api.get_web3_trans_records(["12345678"])
         print(f"Web3 records: {len(web3_records) if isinstance(web3_records, list) else 'N/A'}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"查询 Web3 交易记录失败: {e}")
         
          # 同步 Web3 交易记录
     try:
         sync_web3_records = web3_api.sync_web3_trans_records(1)
         print(f"Web3 records: {len(sync_web3_records) if isinstance(sync_web3_records, list) else 'N/A' }")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"同步 Web3 交易记录失败: {e}")
 
     # ============== 自动归集 ==============
@@ -181,7 +181,7 @@ def main():
     try:
         sweep_wallets = auto_sweep_api.auto_collect_sub_wallets({"symbol": "USDTERC20"})
         print(f"Auto sweep wallets: {sweep_wallets}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"查询自动归集钱包失败: {e}")
 
     # 设置自动归集配置
@@ -190,14 +190,14 @@ def main():
             {"symbol": "USDTERC20", "collect_min": "100", "fueling_limit": "0.01"}
         )
         print(f"Auto sweep config: {sweep_config}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"设置自动归集配置失败: {e}")
 
     # 同步自动归集记录
     try:
         sweep_records = auto_sweep_api.sync_auto_collect_records(0)
         print(f"Auto sweep records count: {len(sweep_records) if isinstance(sweep_records, list) else 'N/A'}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"同步自动归集记录失败: {e}")
 
     # ============== 工作区管理 ==============
@@ -213,7 +213,7 @@ def main():
             print(f"Open chains: {len(open_chains)}, Support chains: {len(support_chains)}")
         else:
             print(f"Chains: {chains}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"获取支持主链失败: {e}")
 
     # 获取币种详情
@@ -222,14 +222,14 @@ def main():
             {"base_symbol": "ETH", "open_chain": True, "limit": 10}
         )
         print(f"Coin details count: {len(coins) if isinstance(coins, list) else 'N/A'}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"获取币种详情失败: {e}")
 
     # 获取最新区块高度
     try:
         block_height = workspace_api.get_last_block_height({"base_symbol": "ETH"})
         print(f"Block height: {block_height}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"获取区块高度失败: {e}")
 
     # ============== TRON 资源管理 ==============
@@ -250,14 +250,14 @@ def main():
             }
         )
         print(f"TRON delegation result: {tron_result}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"购买 TRON 资源失败: {e}")
 
     # 查询资源购买记录
     try:
         tron_records = tron_api.get_buy_resource_records(["12345678908"])
         print(f"TRON records: {len(tron_records) if isinstance(tron_records, list) else 'N/A'}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"查询 TRON 资源记录失败: {e}")
         
         
@@ -265,7 +265,7 @@ def main():
     try:
         tron_records = tron_api.sync_buy_resource_records(10)
         print(f"TRON records: {len(tron_records) if isinstance(tron_records, list) else 'N/A'}")
-    except RuntimeError as e:
+    except ApiError as e:
         print(f"同步 TRON 资源记录失败: {e}")
 
     # ============== 通知处理 ==============

@@ -3,28 +3,83 @@ MPC Client - Main entry point for MPC API operations
 Provides factory methods for creating MPC API instances
 Uses Builder pattern for flexible configuration
 """
-from typing import Optional
+from __future__ import annotations
+
+from typing import Optional, TYPE_CHECKING
+
 from chainup_custody_sdk.mpc.mpc_config import MpcConfig
-from chainup_custody_sdk.utils.crypto_provider import ICryptoProvider
+from chainup_custody_sdk.logger import get_logger, LoggerMixin
+
+if TYPE_CHECKING:
+    from chainup_custody_sdk.utils.crypto_provider import ICryptoProvider
+    from chainup_custody_sdk.mpc.api.wallet_api import WalletApi
+    from chainup_custody_sdk.mpc.api.deposit_api import DepositApi
+    from chainup_custody_sdk.mpc.api.withdraw_api import WithdrawApi
+    from chainup_custody_sdk.mpc.api.web3_api import Web3Api
+    from chainup_custody_sdk.mpc.api.auto_sweep_api import AutoSweepApi
+    from chainup_custody_sdk.mpc.api.notify_api import NotifyApi
+    from chainup_custody_sdk.mpc.api.workspace_api import WorkSpaceApi
+    from chainup_custody_sdk.mpc.api.tron_resource_api import TronResourceApi
 
 
-class MpcClient:
+class MpcClient(LoggerMixin):
     """
     MPC Client - Main entry point for MPC API operations.
+    
     Provides factory methods for creating MPC API instances.
+    Supports context manager protocol for resource management.
+    
+    Example:
+        # Using builder pattern
+        client = (
+            MpcClient.builder()
+            .set_app_id("your-app-id")
+            .set_rsa_private_key("your-private-key")
+            .build()
+        )
+        
+        # Using context manager
+        with MpcClient.builder().set_app_id("...").build() as client:
+            wallet_api = client.get_wallet_api()
+            # ... use API
     """
+    
+    __slots__ = ("config", "_closed")
 
-    def __init__(self, config: MpcConfig):
+    def __init__(self, config: MpcConfig) -> None:
         """
-        Private constructor - use Builder to create instances.
-
+        Creates a new MpcClient instance.
+        
         Args:
             config: MPC configuration object
+        
+        Note:
+            Prefer using MpcClient.builder() for construction.
         """
         self.config = config
+        self._closed = False
         self.config.validate()
+        self._logger.debug(f"MpcClient initialized with app_id={config.app_id}")
 
-    def get_wallet_api(self):
+    def __enter__(self) -> "MpcClient":
+        """Enter context manager."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit context manager."""
+        self.close()
+
+    def close(self) -> None:
+        """
+        Close the client and release resources.
+        
+        This method is called automatically when using context manager.
+        """
+        if not self._closed:
+            self._closed = True
+            self._logger.debug("MpcClient closed")
+
+    def get_wallet_api(self) -> "WalletApi":
         """
         Gets WalletApi instance for wallet operations.
 
@@ -32,10 +87,9 @@ class MpcClient:
             WalletApi instance
         """
         from chainup_custody_sdk.mpc.api.wallet_api import WalletApi
-
         return WalletApi(self.config)
 
-    def get_deposit_api(self):
+    def get_deposit_api(self) -> "DepositApi":
         """
         Gets DepositApi instance for deposit operations.
 
@@ -43,10 +97,9 @@ class MpcClient:
             DepositApi instance
         """
         from chainup_custody_sdk.mpc.api.deposit_api import DepositApi
-
         return DepositApi(self.config)
 
-    def get_withdraw_api(self):
+    def get_withdraw_api(self) -> "WithdrawApi":
         """
         Gets WithdrawApi instance for withdrawal operations.
 
@@ -54,10 +107,9 @@ class MpcClient:
             WithdrawApi instance
         """
         from chainup_custody_sdk.mpc.api.withdraw_api import WithdrawApi
-
         return WithdrawApi(self.config)
 
-    def get_web3_api(self):
+    def get_web3_api(self) -> "Web3Api":
         """
         Gets Web3Api instance for Web3 operations.
 
@@ -65,10 +117,9 @@ class MpcClient:
             Web3Api instance
         """
         from chainup_custody_sdk.mpc.api.web3_api import Web3Api
-
         return Web3Api(self.config)
 
-    def get_auto_sweep_api(self):
+    def get_auto_sweep_api(self) -> "AutoSweepApi":
         """
         Gets AutoSweepApi instance for auto-sweep operations.
 
@@ -76,10 +127,9 @@ class MpcClient:
             AutoSweepApi instance
         """
         from chainup_custody_sdk.mpc.api.auto_sweep_api import AutoSweepApi
-
         return AutoSweepApi(self.config)
 
-    def get_notify_api(self):
+    def get_notify_api(self) -> "NotifyApi":
         """
         Gets NotifyApi instance for notification operations.
 
@@ -87,10 +137,9 @@ class MpcClient:
             NotifyApi instance
         """
         from chainup_custody_sdk.mpc.api.notify_api import NotifyApi
-
         return NotifyApi(self.config)
 
-    def get_workspace_api(self):
+    def get_workspace_api(self) -> "WorkSpaceApi":
         """
         Gets WorkSpaceApi instance for workspace operations.
 
@@ -98,10 +147,9 @@ class MpcClient:
             WorkSpaceApi instance
         """
         from chainup_custody_sdk.mpc.api.workspace_api import WorkSpaceApi
-
         return WorkSpaceApi(self.config)
 
-    def get_tron_resource_api(self):
+    def get_tron_resource_api(self) -> "TronResourceApi":
         """
         Gets TronResourceApi instance for TRON resource operations.
 
@@ -109,14 +157,26 @@ class MpcClient:
             TronResourceApi instance
         """
         from chainup_custody_sdk.mpc.api.tron_resource_api import TronResourceApi
-
         return TronResourceApi(self.config)
 
     @staticmethod
-    def new_builder():
+    def builder() -> "MpcClientBuilder":
         """
         Creates a new Builder instance for configuring MpcClient.
 
+        Returns:
+            Builder instance
+        
+        Example:
+            client = MpcClient.builder().set_app_id("...").build()
+        """
+        return MpcClientBuilder()
+    
+    @staticmethod
+    def new_builder() -> "MpcClientBuilder":
+        """
+        Creates a new Builder instance (alias for builder()).
+        
         Returns:
             Builder instance
         """
@@ -126,14 +186,28 @@ class MpcClient:
 class MpcClientBuilder:
     """
     Builder class for constructing MpcClient instances.
+    
     Implements the Builder pattern for flexible configuration.
+    All setter methods return self for method chaining.
+    
+    Example:
+        client = (
+            MpcClientBuilder()
+            .set_app_id("your-app-id")
+            .set_rsa_private_key("your-private-key")
+            .set_waas_public_key("waas-public-key")
+            .set_debug(True)
+            .build()
+        )
     """
+    
+    __slots__ = ("_options",)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Creates a new Builder instance."""
-        self.options = {}
+        self._options: dict = {}
 
-    def set_domain(self, domain: str):
+    def set_domain(self, domain: str) -> "MpcClientBuilder":
         """
         Sets the API domain URL.
 
@@ -143,10 +217,10 @@ class MpcClientBuilder:
         Returns:
             This builder instance for chaining
         """
-        self.options["domain"] = domain
+        self._options["domain"] = domain
         return self
 
-    def set_app_id(self, app_id: str):
+    def set_app_id(self, app_id: str) -> "MpcClientBuilder":
         """
         Sets the application ID.
 
@@ -156,10 +230,10 @@ class MpcClientBuilder:
         Returns:
             This builder instance for chaining
         """
-        self.options["app_id"] = app_id
+        self._options["app_id"] = app_id
         return self
 
-    def set_rsa_private_key(self, rsa_private_key: str):
+    def set_rsa_private_key(self, rsa_private_key: str) -> "MpcClientBuilder":
         """
         Sets the RSA private key.
 
@@ -169,10 +243,10 @@ class MpcClientBuilder:
         Returns:
             This builder instance for chaining
         """
-        self.options["rsa_private_key"] = rsa_private_key
+        self._options["rsa_private_key"] = rsa_private_key
         return self
 
-    def set_waas_public_key(self, waas_public_key: str):
+    def set_waas_public_key(self, waas_public_key: str) -> "MpcClientBuilder":
         """
         Sets the WaaS server public key for response decryption.
 
@@ -182,10 +256,10 @@ class MpcClientBuilder:
         Returns:
             This builder instance for chaining
         """
-        self.options["waas_public_key"] = waas_public_key
+        self._options["waas_public_key"] = waas_public_key
         return self
 
-    def set_api_key(self, api_key: str):
+    def set_api_key(self, api_key: str) -> "MpcClientBuilder":
         """
         Sets the API key.
 
@@ -195,10 +269,10 @@ class MpcClientBuilder:
         Returns:
             This builder instance for chaining
         """
-        self.options["api_key"] = api_key
+        self._options["api_key"] = api_key
         return self
 
-    def set_sign_private_key(self, sign_private_key: str):
+    def set_sign_private_key(self, sign_private_key: str) -> "MpcClientBuilder":
         """
         Sets the signing private key for withdrawal/Web3 transaction signatures.
 
@@ -208,10 +282,10 @@ class MpcClientBuilder:
         Returns:
             This builder instance for chaining
         """
-        self.options["sign_private_key"] = sign_private_key
+        self._options["sign_private_key"] = sign_private_key
         return self
 
-    def set_crypto_provider(self, crypto_provider: ICryptoProvider):
+    def set_crypto_provider(self, crypto_provider: "ICryptoProvider") -> "MpcClientBuilder":
         """
         Sets a custom crypto provider for encryption/decryption.
 
@@ -221,10 +295,10 @@ class MpcClientBuilder:
         Returns:
             This builder instance for chaining
         """
-        self.options["crypto_provider"] = crypto_provider
+        self._options["crypto_provider"] = crypto_provider
         return self
 
-    def set_debug(self, debug: bool):
+    def set_debug(self, debug: bool) -> "MpcClientBuilder":
         """
         Enables or disables debug mode.
 
@@ -234,7 +308,7 @@ class MpcClientBuilder:
         Returns:
             This builder instance for chaining
         """
-        self.options["debug"] = debug
+        self._options["debug"] = debug
         return self
 
     def build(self) -> MpcClient:
@@ -245,7 +319,7 @@ class MpcClientBuilder:
             Configured MpcClient instance
 
         Raises:
-            ValueError: If required configuration is missing
+            ConfigError: If required configuration is missing
         """
-        config = MpcConfig(**self.options)
+        config = MpcConfig(**self._options)
         return MpcClient(config)

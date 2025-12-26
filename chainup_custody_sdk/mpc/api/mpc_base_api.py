@@ -1,23 +1,31 @@
 """
 MPC Base API - Base class for all MPC API implementations
 """
+from __future__ import annotations
+
 import json
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
+
 from chainup_custody_sdk.utils.mpc_http_client import MpcHttpClient
 from chainup_custody_sdk.utils.crypto_provider import RsaCryptoProvider
+from chainup_custody_sdk.exceptions import ApiError, CryptoError, NetworkError
+from chainup_custody_sdk.logger import LoggerMixin
 
 
-class MpcBaseApi:
+class MpcBaseApi(LoggerMixin):
     """
     MPC Base API Class.
+    
     Provides common functionality for all MPC API implementations.
     Implements the same encryption flow as Java SDK:
     - Request: encrypt params with private key, send as {app_id, data}
     - Response: decrypt data field with public key
     """
+    
+    __slots__ = ("config", "http_client", "crypto_provider")
 
-    def __init__(self, config):
+    def __init__(self, config) -> None:
         """
         Creates a base MPC API instance.
 
@@ -59,6 +67,7 @@ class MpcBaseApi:
     ) -> Dict[str, Any]:
         """
         Executes an MPC API request.
+        
         Flow matches Java SDK invoke():
         1. Serialize params to JSON
         2. Encrypt with private key
@@ -72,28 +81,33 @@ class MpcBaseApi:
 
         Returns:
             API response (decrypted if encrypted)
+        
+        Raises:
+            CryptoError: If encryption/decryption fails
+            NetworkError: If HTTP request fails
+            ApiError: If API returns an error
         """
         # Step 1: Build request args JSON (matches Java SDK args.toJson())
         raw_json = self._build_request_args(data)
 
-        if self.config.debug:
-            print(f"[MPC Request Args]: {raw_json}")
+        self._logger.debug(f"Request args: {raw_json}")
 
         # Step 2: Encrypt with private key (matches Java SDK dataCrypto.encode(raw))
         encrypted_data = ""
         if self.crypto_provider:
             try:
                 encrypted_data = self.crypto_provider.encrypt_with_private_key(raw_json)
-                if self.config.debug:
-                    print(f"[MPC Encrypted Data]: {encrypted_data[:100]}...")
+                self._logger.debug(f"Encrypted data: {encrypted_data[:100]}...")
             except Exception as e:
-                raise RuntimeError(f"Failed to encrypt request data: {str(e)}")
+                raise CryptoError(f"Failed to encrypt request data: {str(e)}")
 
         # Step 3: Send request with only app_id and data
-        response = self.http_client.request(method, path, encrypted_data)
+        try:
+            response = self.http_client.request(method, path, encrypted_data)
+        except RuntimeError as e:
+            raise NetworkError(str(e))
 
-        if self.config.debug:
-            print(f"[MPC Response]: {response}")
+        self._logger.debug(f"Response: {response}")
 
         # Step 4: Check if response has encrypted data field and decrypt
         if response and "data" in response and isinstance(response["data"], str):
@@ -103,14 +117,12 @@ class MpcBaseApi:
                     decrypted = self.crypto_provider.decrypt_with_public_key(
                         response["data"]
                     )
-                    if self.config.debug:
-                        print(f"[MPC Decrypted]: {decrypted}")
+                    self._logger.debug(f"Decrypted: {decrypted}")
                     # Parse decrypted JSON and return complete response
                     decrypted_data = json.loads(decrypted)
                     return decrypted_data
                 except Exception as e:
-                    if self.config.debug:
-                        print(f"[MPC Decrypt Error]: {str(e)}")
+                    self._logger.warning(f"Decrypt error: {str(e)}")
                     # If decryption fails, might be an error response, return as-is
                     return response
 
@@ -142,9 +154,10 @@ class MpcBaseApi:
         """
         return self._execute_request("GET", path, data)
 
-    def validate_response(self, response: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_response(self, response: Union[Dict[str, Any], str]) -> Any:
         """
         Validates response and handles errors.
+        
         Matches WaaS SDK validateResponse behavior:
         - Check if code is 0 (success)
         - Raise exception for error responses
@@ -157,20 +170,20 @@ class MpcBaseApi:
             The 'data' field from successful response, or empty dict if no data
 
         Raises:
-            RuntimeError: If response code indicates an error
+            ApiError: If response code indicates an error
         """
         if isinstance(response, str):
             try:
                 response = json.loads(response)
             except json.JSONDecodeError as e:
-                raise RuntimeError(f"Invalid JSON response: {response}")
+                raise ApiError(f"Invalid JSON response: {response}")
 
         code = response.get("code")
         
         # Check if code is 0 (success) - can be int or string
         if code != 0 and code != "0":
             msg = response.get("msg", "Unknown error")
-            raise RuntimeError(f"API Error [{code}]: {msg}")
+            raise ApiError(message=msg, code=int(code) if code else None)
 
         # Return data field, or empty dict if not present
         return response.get("data", {}) if response.get("data") != "" else {}
