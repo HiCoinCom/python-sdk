@@ -4,11 +4,13 @@ Provides signature generation for MPC withdrawal and Web3 transactions
 """
 import hashlib
 import re
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA256
 import base64
+
+from chainup_custody_sdk.utils.crypto_provider import ICryptoProvider, RsaCryptoProvider
 
 
 class MpcSignUtil:
@@ -28,7 +30,7 @@ class MpcSignUtil:
     """
 
     @staticmethod
-    def generate_withdraw_sign(withdraw_params: Dict[str, Any], sign_private_key: str) -> str:
+    def generate_withdraw_sign(withdraw_params: Dict[str, Any], sign_private_key: Union[str, ICryptoProvider]) -> str:
         """
         Generates signature for MPC withdrawal.
 
@@ -41,12 +43,13 @@ class MpcSignUtil:
                 - amount: Withdrawal amount
                 - memo: Address memo (optional)
                 - outputs: UTXO outputs (optional)
-            sign_private_key: RSA private key for signing (PEM format)
+            sign_private_key: RSA private key for signing (PEM format) or ICryptoProvider instance
 
         Returns:
             Base64 encoded signature
 
         Example:
+            # Using private key string
             signature = MpcSignUtil.generate_withdraw_sign({
                 'request_id': 'unique-id',
                 'sub_wallet_id': 123,
@@ -54,6 +57,10 @@ class MpcSignUtil:
                 'address_to': '0x123...',
                 'amount': '0.1'
             }, private_key)
+            
+            # Using RsaCryptoProvider
+            provider = RsaCryptoProvider(sign_private_key=private_key)
+            signature = MpcSignUtil.generate_withdraw_sign(params, provider)
         """
         if not withdraw_params or not sign_private_key:
             return ""
@@ -72,10 +79,18 @@ class MpcSignUtil:
         if not sign_data:
             return ""
 
-        return MpcSignUtil.sign(sign_data, sign_private_key)
+        # Use ICryptoProvider if provided, otherwise use legacy sign method
+        if isinstance(sign_private_key, ICryptoProvider):
+            try:
+                return sign_private_key.sign(sign_data)
+            except Exception as e:
+                print(f"MPC sign error: {str(e)}")
+                return ""
+        else:
+            return MpcSignUtil.sign(sign_data, sign_private_key)
 
     @staticmethod
-    def generate_web3_sign(web3_params: Dict[str, Any], sign_private_key: str) -> str:
+    def generate_web3_sign(web3_params: Dict[str, Any], sign_private_key: Union[str, ICryptoProvider]) -> str:
         """
         Generates signature for Web3 transaction.
 
@@ -87,12 +102,13 @@ class MpcSignUtil:
                 - interactive_contract: Interactive contract address
                 - amount: Transaction amount
                 - input_data: Input data
-            sign_private_key: RSA private key for signing (PEM format)
+            sign_private_key: RSA private key for signing (PEM format) or ICryptoProvider instance
 
         Returns:
             Base64 encoded signature
 
         Example:
+            # Using private key string
             signature = MpcSignUtil.generate_web3_sign({
                 'request_id': 'unique-id',
                 'sub_wallet_id': 123,
@@ -101,6 +117,10 @@ class MpcSignUtil:
                 'amount': '0',
                 'input_data': '0x...'
             }, private_key)
+            
+            # Using RsaCryptoProvider
+            provider = RsaCryptoProvider(sign_private_key=private_key)
+            signature = MpcSignUtil.generate_web3_sign(params, provider)
         """
         if not web3_params or not sign_private_key:
             return ""
@@ -118,7 +138,15 @@ class MpcSignUtil:
         if not sign_data:
             return ""
 
-        return MpcSignUtil.sign(sign_data, sign_private_key)
+        # Use ICryptoProvider if provided, otherwise use legacy sign method
+        if isinstance(sign_private_key, ICryptoProvider):
+            try:
+                return sign_private_key.sign(sign_data)
+            except Exception as e:
+                print(f"MPC sign error: {str(e)}")
+                return ""
+        else:
+            return MpcSignUtil.sign(sign_data, sign_private_key)
 
     @staticmethod
     def params_sort(params: Dict[str, Any]) -> str:

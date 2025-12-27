@@ -43,6 +43,7 @@ class MpcBaseApi(LoggerMixin):
                 private_key=config.rsa_private_key,
                 public_key=config.waas_public_key or "",  # WaaS server public key
                 charset="UTF-8",
+                sign_private_key=config.sign_private_key,
             )
         else:
             self.crypto_provider = None

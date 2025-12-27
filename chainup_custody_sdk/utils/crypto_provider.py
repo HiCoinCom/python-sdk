@@ -3,6 +3,7 @@ Crypto Provider - Interface and implementations for encryption/decryption
 """
 from abc import ABC, abstractmethod
 import base64
+import hashlib
 from typing import Optional
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_v1_5
@@ -86,6 +87,7 @@ class RsaCryptoProvider(ICryptoProvider):
         private_key: Optional[str] = None,
         public_key: Optional[str] = None,
         charset: str = "UTF-8",
+        sign_private_key: Optional[str] = None,
     ):
         """
         Creates a new RSA crypto provider instance.
@@ -94,10 +96,12 @@ class RsaCryptoProvider(ICryptoProvider):
             private_key: RSA private key in PEM format
             public_key: RSA public key in PEM format
             charset: Character encoding (default: UTF-8)
+            sign_private_key: RSA private key for signing in PEM format (optional, uses private_key if not set)
         """
         self.private_key = self._format_rsa_key(private_key, "private") if private_key else None
         self.public_key = self._format_rsa_key(public_key, "public") if public_key else None
         self.charset = charset
+        self.sign_private_key = self._format_rsa_key(sign_private_key, "private") if sign_private_key else None
 
     @staticmethod
     def _format_rsa_key(key: str, key_type: str) -> str:
@@ -265,7 +269,12 @@ class RsaCryptoProvider(ICryptoProvider):
 
     def sign(self, data: str) -> str:
         """
-        Signs data using private key.
+        Signs data using sign_private_key if set, otherwise uses private_key.
+        
+        Process (matches MpcSignUtil.sign):
+        1. Generate MD5 hash of the data
+        2. Sign the MD5 hash with RSA-SHA256
+        3. Return Base64 encoded signature
 
         Args:
             data: Data to sign
@@ -273,13 +282,22 @@ class RsaCryptoProvider(ICryptoProvider):
         Returns:
             Base64 encoded signature
         """
-        if not self.private_key:
-            raise ValueError("Private key is not set")
+        # Use sign_private_key if set, otherwise fall back to private_key
+        signing_key = self.sign_private_key if self.sign_private_key else self.private_key
+        
+        if not signing_key:
+            raise ValueError("Neither sign_private_key nor private_key is set")
 
         try:
-            key = RSA.import_key(self.private_key)
-            hash_obj = SHA256.new(data.encode("utf-8"))
+            # Step 1: Generate MD5 hash of the data
+            md5_hash = hashlib.md5(data.encode("utf-8")).hexdigest()
+            
+            # Step 2: Sign the MD5 hash with RSA-SHA256
+            key = RSA.import_key(signing_key)
+            hash_obj = SHA256.new(md5_hash.encode("utf-8"))
             signature = pkcs1_15.new(key).sign(hash_obj)
+            
+            # Step 3: Return Base64 encoded signature
             return base64.b64encode(signature).decode("utf-8")
         except Exception as e:
             raise RuntimeError(f"Failed to sign data: {str(e)}")

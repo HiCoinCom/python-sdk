@@ -59,10 +59,10 @@ class WithdrawApi(MpcBaseApi):
 
         need_transaction_sign = params.get("need_transaction_sign", False)
 
-        # Check if sign_private_key is configured when signature is required
-        if need_transaction_sign and not self.config.sign_private_key:
+        # Check if sign_private_key or crypto_provider is configured when signature is required
+        if need_transaction_sign and not self.config.sign_private_key and not self.config.crypto_provider:
             raise ValueError(
-                "MPC withdrawal requires sign_private_key in config when need_transaction_sign is True"
+                "MPC withdrawal requires sign_private_key in config or crypto_provider when need_transaction_sign is True"
             )
 
         request_data = {
@@ -86,19 +86,27 @@ class WithdrawApi(MpcBaseApi):
         # Generate signature if needed
         if need_transaction_sign:
             try:
-                # Generate transaction signature using MpcSignUtil
-                signature = MpcSignUtil.generate_withdraw_sign(
-                    {
-                        "request_id": params["request_id"],
-                        "sub_wallet_id": params["sub_wallet_id"],
-                        "symbol": params["symbol"],
-                        "address_to": params["address_to"],
-                        "amount": params["amount"],
-                        "memo": params.get("memo"),
-                        "outputs": params.get("outputs"),
-                    },
-                    self.config.sign_private_key,
-                )
+                sign_params = {
+                    "request_id": params["request_id"],
+                    "sub_wallet_id": params["sub_wallet_id"],
+                    "symbol": params["symbol"],
+                    "address_to": params["address_to"],
+                    "amount": params["amount"],
+                    "memo": params.get("memo"),
+                    "outputs": params.get("outputs"),
+                }
+                
+                # Use crypto_provider if available, otherwise fall back to sign_private_key
+                if self.crypto_provider:
+                    signature = MpcSignUtil.generate_withdraw_sign(
+                        sign_params,
+                        self.crypto_provider,
+                    )
+                else:
+                    signature = MpcSignUtil.generate_withdraw_sign(
+                        sign_params,
+                        self.config.sign_private_key,
+                    )
                 
                 if signature:
                     request_data["sign"] = signature
