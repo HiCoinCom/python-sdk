@@ -29,10 +29,10 @@ cd python-sdk
 pip install -e .
 ```
 
-### Using pip (coming soon)
+### From GitHub
 
 ```bash
-pip install chainup-custody-sdk
+pip install git+https://github.com/HiCoinCom/python-sdk.git@main
 ```
 
 ### Development Installation
