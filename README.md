@@ -6,7 +6,7 @@
 
 A comprehensive Python SDK for ChainUp Custody's WaaS (Wallet-as-a-Service) and MPC (Multi-Party Computation) APIs.
 
-**[中文文档](README_CN.md)**
+**[中文文档](docs/README_CN.md)**
 
 ## Features
 

@@ -6,7 +6,7 @@
 
 ChainUp Custody 的 WaaS（钱包即服务）和 MPC（多方计算）API 的综合 Python SDK。
 
-**[English Documentation](README.md)**
+**[English Documentation](../README.md)**
 
 ## 特性
 
