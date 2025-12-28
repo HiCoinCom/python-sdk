@@ -159,20 +159,28 @@ class WalletApi(MpcBaseApi):
         result = self.validate_response(response)
         return result.get("code") == "0"
 
-    def get_wallet_list(self, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def wallet_address_info(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Gets wallet list.
+        Verifies address information.
+        Input a specific address and get the response of the corresponding custody
+        user and currency information.
 
         Args:
-            params: Query parameters (optional)
-                - max_id: Starting wallet ID (optional, default: 0)
+            params: Query parameters (snake_case naming)
+                - address: Any address
+                - memo: If it's a Memo type, input the memo (optional)
 
         Returns:
-            Wallet list
+            Address information
 
         Example:
-            wallets = wallet_api.get_wallet_list({'max_id': 0})
+            info = wallet_api.wallet_address_info({
+                'address': '0x123...',
+                'memo': 'optional-memo'
+            })
         """
-        params = params or {}
-        response = self.get("/api/mpc/sub_wallet/get/list", params)
+        if not params.get("address"):
+            raise ValueError('Parameter "address" is required')
+
+        response = self.get("/api/mpc/sub_wallet/address/info", params)
         return self.validate_response(response)
