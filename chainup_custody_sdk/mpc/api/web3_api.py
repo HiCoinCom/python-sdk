@@ -144,7 +144,7 @@ class Web3Api(MpcBaseApi):
 
         Args:
             params: Acceleration parameters
-                - request_id: Request ID to accelerate (required)
+                - trans_id: Web3 transaction ID (required)
                 - gas_price: New gas price in Gwei (required)
                 - gas_limit: New gas limit (required)
 
@@ -153,12 +153,12 @@ class Web3Api(MpcBaseApi):
 
         Example:
             result = web3_api.accelerate_web3_trans({
-                'request_id': 'original-request-id',
+                'trans_id': 12345,
                 'gas_price': '50',
                 'gas_limit': '30000'
             })
         """
-        required_fields = ["request_id", "gas_price", "gas_limit"]
+        required_fields = ["trans_id", "gas_price", "gas_limit"]
         for field in required_fields:
             if field not in params:
                 raise ValueError(f"Required parameters: {', '.join(required_fields)}")
@@ -166,7 +166,7 @@ class Web3Api(MpcBaseApi):
         response = self.post(
             "/api/mpc/web3/pending",
             {
-                "request_id": params["request_id"],
+                "trans_id": params["trans_id"],
                 "gas_price": params["gas_price"],
                 "gas_limit": params["gas_limit"],
             },
