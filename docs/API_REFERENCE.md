@@ -469,34 +469,32 @@ ApiCode.IP_FORBIDDEN      # 100007
 # ... see full list in code
 ```
 
-### DepositStatus
+### MpcDepositStatus
 
 Deposit transaction status.
 
 ```python
-from chainup_custody_sdk import DepositStatus
+from chainup_custody_sdk import MpcDepositStatus
 
-DepositStatus.CONFIRMING  # 0
-DepositStatus.SUCCESS     # 1
-DepositStatus.FAILED      # 2
+MpcDepositStatus.CONFIRMING  # 1900
+MpcDepositStatus.SUCCESS     # 2000
+MpcDepositStatus.FAILED      # 2400
 ```
 
-### WithdrawStatus
+### MpcWithdrawStatus
 
 Withdrawal transaction status.
 
 ```python
-from chainup_custody_sdk import WithdrawStatus
+from chainup_custody_sdk import MpcWithdrawStatus
 
-WithdrawStatus.PENDING_AUDIT    # 0
-WithdrawStatus.AUDITING         # 1
-WithdrawStatus.AUDIT_PASSED     # 2
-WithdrawStatus.AUDIT_REJECTED   # 3
-WithdrawStatus.PROCESSING       # 4
-WithdrawStatus.BROADCASTING     # 5
-WithdrawStatus.SUCCESS          # 6
-WithdrawStatus.FAILED           # 7
-WithdrawStatus.CANCELLED        # 8
+MpcWithdrawStatus.PENDING_AUDIT    # 1000
+MpcWithdrawStatus.AUDIT_PASSED     # 1100
+MpcWithdrawStatus.AUDIT_REJECTED   # 2300
+MpcWithdrawStatus.PROCESSING       # 1200
+MpcWithdrawStatus.SUCCESS          # 2000
+MpcWithdrawStatus.FAILED           # 2400
+MpcWithdrawStatus.CANCELLED        # 2200
 ```
 
 ---

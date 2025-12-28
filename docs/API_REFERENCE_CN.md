@@ -487,34 +487,32 @@ ApiCode.USER_RISK_FORBIDDEN   # 900006 - 用户存在风险，禁止提现
 ApiCode.SELF_TRANSFER_FORBIDDEN  # 3040006 - 不能给自己转账
 ```
 
-### DepositStatus
+### MpcDepositStatus
 
 充值交易状态。
 
 ```python
-from chainup_custody_sdk import DepositStatus
+from chainup_custody_sdk import MpcDepositStatus
 
-DepositStatus.CONFIRMING  # 0 - 确认中
-DepositStatus.SUCCESS     # 1 - 成功
-DepositStatus.FAILED      # 2 - 失败
+MpcDepositStatus.CONFIRMING  # 1900 - 确认中
+MpcDepositStatus.SUCCESS     # 2000 - 成功
+MpcDepositStatus.FAILED      # 2400 - 失败
 ```
 
-### WithdrawStatus
+### MpcWithdrawStatus
 
 提现交易状态。
 
 ```python
-from chainup_custody_sdk import WithdrawStatus
+from chainup_custody_sdk import MpcWithdrawStatus
 
-WithdrawStatus.PENDING_AUDIT    # 0 - 待审核
-WithdrawStatus.AUDITING         # 1 - 审核中
-WithdrawStatus.AUDIT_PASSED     # 2 - 审核通过
-WithdrawStatus.AUDIT_REJECTED   # 3 - 审核拒绝
-WithdrawStatus.PROCESSING       # 4 - 处理中
-WithdrawStatus.BROADCASTING     # 5 - 广播中
-WithdrawStatus.SUCCESS          # 6 - 成功
-WithdrawStatus.FAILED           # 7 - 失败
-WithdrawStatus.CANCELLED        # 8 - 已取消
+MpcWithdrawStatus.PENDING_AUDIT    # 1000 - 待审核
+MpcWithdrawStatus.AUDIT_PASSED     # 1100 - 审核通过
+MpcWithdrawStatus.AUDIT_REJECTED   # 2300 - 审核拒绝
+MpcWithdrawStatus.PROCESSING       # 1200 - 处理中
+MpcWithdrawStatus.SUCCESS          # 2000 - 成功
+MpcWithdrawStatus.FAILED           # 2400 - 失败
+MpcWithdrawStatus.CANCELLED        # 2200 - 已取消
 ```
 
 ---

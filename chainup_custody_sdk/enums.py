@@ -55,48 +55,54 @@ class ApiCode(IntEnum):
     SELF_TRANSFER_FORBIDDEN = 3040006  # Cannot transfer to self
 
 
-class DepositStatus(IntEnum):
+class MpcDepositStatus(IntEnum):
     """Deposit transaction status."""
-    CONFIRMING = 0
-    SUCCESS = 1
-    FAILED = 2
+    CONFIRMING = 1900
+    SUCCESS = 2000
+    FAILED = 2400
 
 
-class WithdrawStatus(IntEnum):
+class MpcWithdrawStatus(IntEnum):
     """Withdrawal transaction status."""
-    PENDING_AUDIT = 0
-    AUDITING = 1
-    AUDIT_PASSED = 2
-    AUDIT_REJECTED = 3
-    PROCESSING = 4
-    BROADCASTING = 5
-    SUCCESS = 6
-    FAILED = 7
-    CANCELLED = 8
+    PENDING_AUDIT = 1000
+    AUDIT_PASSED = 1100
+    AUDIT_REJECTED = 2300
+    PROCESSING = 1200
+    SUCCESS = 2000
+    FAILED = 2400
+    CANCELLED = 2200
 
 
-class Web3TransType(IntEnum):
+class MpcWeb3TransType(IntEnum):
     """Web3 transaction types."""
-    CONTRACT_CALL = 1
-    CONTRACT_DEPLOY = 2
-    TRANSFER = 3
+    APPROVE = 0
+    TRANSACTION = 1
+    TRON_PERMISSION_APPROVE = 22
+    TRON_APPROVED_TRANSFER = 23
 
 
 class TronResourceType(IntEnum):
     """TRON resource types for delegation."""
+    BANDWIDTH_AND_ENERGY = 0
     ENERGY = 1
-    BANDWIDTH = 2
 
+
+class TronServiceType(str, Enum):
+    """TRON resource service duration types."""
+    TEN_MIN = "10010"
+    ONE_HOUR = "20001"
+    ONE_DAY = "30001"
+    
 
 class TronBuyType(IntEnum):
     """TRON resource buy types."""
-    API_BUY = 0
+    SYSTEM = 0
     MANUAL = 1
 
 
 class WalletShowStatus(IntEnum):
     """Wallet display status in app."""
-    HIDDEN = 0
+    HIDDEN = 2
     VISIBLE = 1
 
 

@@ -60,10 +60,14 @@ from chainup_custody_sdk.exceptions import (
 from chainup_custody_sdk.enums import (
     HttpMethod,
     ApiCode,
-    DepositStatus,
-    WithdrawStatus,
-    Web3TransType,
+    MpcDepositStatus,
+    MpcWithdrawStatus,
+    MpcWeb3TransType,
     TronResourceType,
+    TronServiceType,
+    TronBuyType,
+    WalletShowStatus,
+    AutoCollectStatus,
     QueryIdType,
 )
 
@@ -118,10 +122,14 @@ __all__ = [
     # Enums
     "HttpMethod",
     "ApiCode",
-    "DepositStatus",
-    "WithdrawStatus",
-    "Web3TransType",
+    "MpcDepositStatus",
+    "MpcWithdrawStatus",
+    "MpcWeb3TransType",
     "TronResourceType",
+    "TronServiceType",
+    "TronBuyType",
+    "WalletShowStatus",
+    "AutoCollectStatus",
     "QueryIdType",
     # Models
     "ApiResponse",
